@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Vision Aid</title>
+        <link rel="'stylesheet" href="'style.css">
+    </head>
+    <body>
+        <h2>Vision Aid</h2>
+
+        <div id="tab-buttons">
+            <button id="mainTab" class="tab active">Main</button>
+            <button id="settingsTab" class="tab">Settings</button>
+          </div>
+
+        <div id="'mainPage">
+            <label><input type="checkbox" id="guideBar"> Reading Guide Bar</label><br>
+            <label><input type="checkbox" id="dots"> Convergence Dots</label><br>
+            <label><input type="checkbox" id="timer"> 20-20-20 Timer</label><br>
+            <label><input type="checkbox" id="bionic"> Bionic Reading</label><br>
+            <label><input type="checkbox" id="blink"> Blink Reminders</label><br>
+            <label><input type="checkbox" id="magnification"> Magnification</label><br>
+            <label><input type="checkbox" id="lazy"> Lazy Eye Mode</label><br>
+            <label><input type="checkbox" id="focus"> Focus Mode</label><br>
+            <label><input type="checkbox" id="iso"> Text Line Isolation</label><br>
+            <label><input type="checkbox" id="syllables"> Syllable Highlighter</label><br>
+            <label><input type="checkbox" id="cursor"> Large Cursor</label><br>
+            <button id="relaxButton">Relax My Eyes</button>
+        </div>
+
+        <div id="settingsPage" style="display: none;">
+            <h3>Settings</h3>
+            <label>
+              Relax duration: <input type="number" id="relaxDuration" value="20"> seconds
+            </label><br>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>

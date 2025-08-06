@@ -14,8 +14,8 @@ document.getElementById("mainTab").addEventListener("click", () => {
 
 const features = ["guideBar", "dots", "timer", "bionic", "blink", "magnification", "lazy", "focus", "iso", "syllables", "cursor"];
 
-features.forEach((features) => {
-    const checkbox = document.getElementById(features);
+features.forEach((feature) => {
+    const checkbox = document.getElementById(feature);
     checkbox.addEventListener('change', async (e) =>{
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
         chrome.tabs.sendMessage(tab.id, {

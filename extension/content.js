@@ -113,5 +113,5 @@ function showBlinkOverlay() {
 
     setTimeout(() => {
         box.remove();
-    }, 10 * 1000);
+    }, 15 * 1000);
 }

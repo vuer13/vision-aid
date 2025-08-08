@@ -23,7 +23,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_bionic":
-            // TODO
+            if (message.value) {
+                toggleBionicMode();
+            } else {
+                location.reload();
+            }
             break;
 
         case "trigger_blink":
@@ -152,4 +156,40 @@ function disableGuideBar() {
         document.removeEventListener("mousemove", guideBarMouseMoveListener);
         guideBarMouseMoveListener = null;
     }
+}
+
+function toggleBionicMode() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+        applyBionicText(node);
+    }
+}
+
+function applyBionicText(node) {
+    if (!node || !node.nodeValue || node.parentNode.tagName === "STYLE" || node.parentNode.tagName === "SCRIPT") {
+        return;
+    }
+    const words = node.nodeValue.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+        return;
+    }
+
+    const span = document.createElement("span");
+    words.forEach((word, i) => {
+        const boldLength = Math.ceil(word.length / 2);
+        const boldPart = word.slice(0, boldLength);
+        const normalPart = word.slice(boldLength);
+
+        const wordSpan = document.createElement("span");
+        wordSpan.innerHTML = `<b>${boldPart}</b>${normalPart}`;
+
+        span.appendChild(wordSpan);
+
+        if (i < words.length - 1) {
+            span.appendChild(document.createTextNode(" "));
+        }
+    });
+
+    node.parentNode.replaceChild(span, node);
 }

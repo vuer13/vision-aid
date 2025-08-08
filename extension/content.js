@@ -11,7 +11,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_guideBar":
-            // TODO
+            if (message.value) {
+                enableGuideBar();
+            } else {
+                disableGuideBar();
+            }
             break;
 
         case "toggle_dots":
@@ -114,4 +118,38 @@ function showBlinkOverlay() {
     setTimeout(() => {
         box.remove();
     }, 15 * 1000);
+}
+
+let guideBar = null;
+let guideBarMouseMoveListener = null;
+
+function enableGuideBar() {
+    guideBar = document.createElement("div");
+    guideBar.id = 'guideBar';
+    guideBarElement.style.cssText = `
+        position: fixed;
+        left: 0;
+        width: 100vw;
+        height: 2px;
+        background-color: red;
+        pointer-events: none;
+        z-index: 9999;
+    `;
+    document.body.appendChild(guideBar);
+
+    guideBarMouseMoveListener = (e) => {
+        guideBar.style.top = `${e.clientY}px`;
+    };
+    document.addEventListener("mousemove", guideBarMouseMoveListener);
+}
+
+function disableGuideBar() {
+    if (guideBar) {
+        guideBar.remove();
+        guideBar = null;
+    }
+    if (guideBarMouseMoveListener) {
+        document.removeEventListener("mousemove", guideBarMouseMoveListener);
+        guideBarMouseMoveListener = null;
+    }
 }

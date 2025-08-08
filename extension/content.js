@@ -1,7 +1,7 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch(message.action) {
         case "trigger_relax_mode":
-            // TODO, MAKE A FUNCTION OVERLAY
+            relaxOverlay();
             break;
 
         case "toggle_time":
@@ -51,3 +51,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
     }
 });
+
+function relaxOverlay() {
+    if (document.getElementById('relax-overlay')) {
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = "relax-overlay";
+    overlay.innerText = "Time to relax your eyes \n Look at something 20 feet away";
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background-color: rgba(0, 0, 0, 0.9);
+        color: white;
+        font-size: 2rem;
+        text-align: center;
+        padding-top: 40vh;
+        z-index: 9999;
+    `;
+    document.body.appendChild(overlay);
+
+    setTimeout(() => {
+        overlay.remove();
+    }, message.duration * 1000);
+}

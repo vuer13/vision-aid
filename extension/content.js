@@ -47,7 +47,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_cursor":
-            // TODO
+            if (message.value) {
+                document.body.classList.add("visionaid-large-cursor");
+            } else {
+                document.body.classList.remove("visionaid-large-cursor");
+            }
             break;
     }
 });

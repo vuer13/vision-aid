@@ -18,10 +18,18 @@ features.forEach((feature) => {
     const checkbox = document.getElementById(feature);
     checkbox.addEventListener('change', async (e) =>{
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
-        chrome.tabs.sendMessage(tab.id, {
-            action: `toggle_${feature}`,
-            value: e.target.checked
-          });
+        if (feature === "blink") {
+            chrome.tabs.sendMessage(tab.id, {
+                action: `toggle_${feature}`,
+                value: e.target.checked,
+                interval
+            });
+        } else {
+            chrome.tabs.sendMessage(tab.id, {
+                action: `toggle_${feature}`,
+                value: e.target.checked
+            });
+        }
     });
 });
 

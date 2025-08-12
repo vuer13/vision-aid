@@ -2,6 +2,9 @@ let focusOverlay = null;
 let focusActive = false;
 let guideBar = null;
 let guideBarMouseMoveListener = null;
+let textIsolationEnabled = false;
+let textIsolationOverlay = null;
+let mouseMoveListener = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
@@ -62,11 +65,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_iso":
-            // TODO
-            break;
-
-        case "toggle_syllables":
-            // TODO
+            if (message.value) {
+                enableTextIsolation();
+            } else {
+                disableTextIsolation();
+            }
             break;
 
         case "toggle_cursor":
@@ -236,5 +239,54 @@ function disableFocusMode() {
     if (focusOverlay) {
         focusOverlay.remove();
         focusOverlay = null;
+    }
+}
+
+function enableTextIsolation() {
+    if (textIsolationEnabled) {
+        return;
+    }
+
+    textIsolationOverlay = document.createElement("div");
+    textIsolationOverlay.id = "text-isolation-overlay";
+    textIsolationOverlay.style.cssText = `
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: 1.5em;
+        background-color: rgba(255, 255, 0, 0.3);
+        pointer-events: none;
+        z-index: 9999;
+        display: none;
+    `;
+    document.body.appendChild(textIsolationOverlay);
+
+    mouseMoveListener = (e) => {
+        const lineHeight = parseFloat(getComputedStyle(document.body).lineHeight) || 20;
+        const y = e.clientY - (lineHeight / 2);
+
+        textIsolationOverlay.style.top = `${y}px`;
+        textIsolationOverlay.style.height = `${lineHeight}px`;
+        textIsolationOverlay.style.display = "block";
+    }
+
+    document.addEventListener("mousemove", mouseMoveListener);
+}
+
+function disableTextIsolation() {
+    if (!textIsolationEnabled) {
+        return;
+    }
+
+    textIsolationEnabled = false;
+
+    if (textIsolationOverlay) {
+        textIsolationOverlay.remove();
+        textIsolationOverlay = null;
+    }
+
+    if (mouseMoveListener) {
+        document.removeEventListener("mousemove", mouseMoveListener);
+        mouseMoveListener = null;
     }
 }

@@ -1,3 +1,8 @@
+let focusOverlay = null;
+let focusActive = false;
+let guideBar = null;
+let guideBarMouseMoveListener = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
         case "trigger_relax_mode":
@@ -49,7 +54,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_focus":
-            // TODO
+            if (message.value) {
+                enableFocus(); 
+            } else {
+                disableFocus()
+            }
             break;
 
         case "toggle_iso":
@@ -124,9 +133,6 @@ function showBlinkOverlay() {
     }, 15 * 1000);
 }
 
-let guideBar = null;
-let guideBarMouseMoveListener = null;
-
 function enableGuideBar() {
     guideBar = document.createElement("div");
     guideBar.id = 'guideBar';
@@ -192,4 +198,43 @@ function applyBionicText(node) {
     });
 
     node.parentNode.replaceChild(span, node);
+}
+
+function enableFocusMode() {
+    focusActive = true;
+    document.addEventListener("click", selectFocusElement, { once: true });
+    alert("Click on what you want to focus on");
+}
+
+function selectFocusElement(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const target = e.target.getBoundingClientRect();
+
+    if (focusOverlay) {
+        focusOverlay.remove();
+    }
+
+    focusOverlay = document.createElement("div");
+    focusOverlay.id = "focus-overlay";
+    focusOverlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background-color: rgba(0, 0, 0, 0.7);
+        pointer-events: none;
+        z-index: 9999;
+        clip-path: inset(${target.top}px ${window.innerWidth - target.right}px ${window.innerHeight - target.bottom}px ${target.left}px);
+    `;
+
+    document.body.appendChild(focusOverlay);
+}
+
+function disableFocusMode() {
+    focusActive = false;
+    if (focusOverlay) {
+        focusOverlay.remove();
+        focusOverlay = null;
+    }
 }

@@ -26,10 +26,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             break;
 
-        case "toggle_dots":
-            // TODO
-            break;
-
         case "toggle_bionic":
             if (message.value) {
                 toggleBionicMode();
@@ -53,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
 
         case "toggle_lazy":
-            // TODO?? unsure if I will keep
+            // TODO
             break;
 
         case "toggle_focus":

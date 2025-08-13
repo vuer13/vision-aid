@@ -1,3 +1,5 @@
+console.log("Vision Aid content.js loaded");
+
 let focusOverlay = null;
 let focusActive = false;
 let guideBar = null;
@@ -14,12 +16,13 @@ let lemIntervalMs = 15000;
 let lemColor = "rgba(0, 0, 0, 0.35)";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Vision Aid received:", message);
     switch (message.action) {
         case "trigger_relax_mode":
             relaxOverlay(message.duration);
             break;
 
-        case "toggle_time":
+        case "toggle_timer":
             chrome.runtime.sendMessage({
                 action: message.value ? "start_timer" : "stop_timer"
             });
@@ -41,9 +44,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
             break;
 
-        case "trigger_blink":
+        case "toggle_blink":
             chrome.runtime.sendMessage({
-                action: message.value ? "start_blink_timer" : "stop_blink_timer"
+                action: message.value ? "start_blink_timer" : "stop_blink_timer",
+                periodMinutes: message.periodMinutes
             });
             break;
 
@@ -61,9 +65,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case "toggle_focus":
             if (message.value) {
-                enableFocus();
+                enableFocusMode();
             } else {
-                disableFocus()
+                disableFocusMode()
             }
             break;
 
@@ -142,7 +146,7 @@ function showBlinkOverlay() {
 function enableGuideBar() {
     guideBar = document.createElement("div");
     guideBar.id = 'guideBar';
-    guideBarElement.style.cssText = `
+    guideBar.style.cssText = `
         position: fixed;
         left: 0;
         width: 100vw;
@@ -170,40 +174,88 @@ function disableGuideBar() {
     }
 }
 
-function toggleBionicMode() {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-        applyBionicText(node);
-    }
+function ensureBionicCSS() {
+    if (document.getElementById("va-bionic-style")) return;
+    const s = document.createElement("style");
+    s.id = "va-bionic-style";
+    s.textContent = `
+      .va-bionic-strong { font-weight: 700 !important; }
+    `;
+    document.documentElement.appendChild(s);
 }
 
 function applyBionicText(node) {
-    if (!node || !node.nodeValue || node.parentNode.tagName === "STYLE" || node.parentNode.tagName === "SCRIPT") {
+    if (!node || !node.nodeValue) {
         return;
     }
-    const words = node.nodeValue.split(/\s+/).filter(Boolean);
+    const parent = node.parentNode;
+    if (!parent) {
+        return;
+    }
+
+    const tag = parent.tagName;
+    if (tag === "STYLE" || tag === "SCRIPT" || tag === "NOSCRIPT" || tag === "CODE" || tag === "PRE" || tag === "TEXTAREA" || tag === "INPUT" || parent.isContentEditable) {
+        return;
+    }
+
+    const text = node.nodeValue;
+    const words = text.split(/(\s+)/);
     if (words.length === 0) {
         return;
     }
+    const fragment = document.createDocumentFragment();
 
-    const span = document.createElement("span");
-    words.forEach((word, i) => {
-        const boldLength = Math.ceil(word.length / 2);
-        const boldPart = word.slice(0, boldLength);
-        const normalPart = word.slice(boldLength);
+    for (let i = 0; i < words.length; i++) {
+        const token = words[i];
 
-        const wordSpan = document.createElement("span");
-        wordSpan.innerHTML = `<b>${boldPart}</b>${normalPart}`;
-
-        span.appendChild(wordSpan);
-
-        if (i < words.length - 1) {
-            span.appendChild(document.createTextNode(" "));
+        if (/^\s+$/.test(token)) {
+            fragment.appendChild(document.createTextNode(token));
+            continue;
         }
-    });
 
-    node.parentNode.replaceChild(span, node);
+        const boldLen = Math.ceil(token.length / 2);
+        const boldPart = token.slice(0, boldLen);
+        const normalPart = token.slice(boldLen);
+
+        const strong = document.createElement("span");
+        strong.className = "va-bionic-strong";
+        strong.appendChild(document.createTextNode(boldPart));
+
+        fragment.appendChild(strong);
+        if (normalPart) {
+            fragment.appendChild(document.createTextNode(normalPart));
+        }
+    }
+
+    parent.replaceChild(fragment, node);
+}
+
+function toggleBionicMode() {
+    ensureBionicCSS();
+
+    const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        {
+            acceptNode(n) {
+                if (!n.nodeValue || !n.nodeValue.trim()) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains("va-bionic-strong")) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }
+    );
+
+    let node;
+    const batch = [];
+    while ((node = walker.nextNode())) batch.push(node);
+
+    for (const textNode of batch) {
+        applyBionicText(textNode);
+    }
 }
 
 function enableFocusMode() {
@@ -249,6 +301,8 @@ function enableTextIsolation() {
     if (textIsolationEnabled) {
         return;
     }
+
+    textIsolationEnabled = true;
 
     textIsolationOverlay = document.createElement("div");
     textIsolationOverlay.id = "text-isolation-overlay";
@@ -301,6 +355,10 @@ function startLazyEye() {
 
     lemRunning = true;
     ensureLazyOverlay();
+
+    if (lemOverlay) {
+        lemOverlay.style.display = "block";
+    }
     if (lemTimerId) {
         clearInterval(lemTimerId);
     }

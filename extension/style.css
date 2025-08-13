@@ -1,9 +1,4 @@
-.visionaid-large-cursor {
-    cursor: url('https://cdn.jsdelivr.net/npm/@iconify/icons-ic/round-cursor-default.svg') 16 16, auto;
-}
-  
-@media (pointer: fine) {
-    .visionaid-large-cursor * {
-      cursor: url('https://cdn.jsdelivr.net/npm/@iconify/icons-ic/round-cursor-default.svg') 16 16, auto !important;
-    }
+.visionaid-large-cursor,
+.visionaid-large-cursor * {
+    cursor: zoom-in !important;
 }

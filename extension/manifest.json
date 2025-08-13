@@ -1,9 +1,9 @@
 {
     "manifest_version": 3,
     "name": "Vision Aid",
-    "version": "1,0",
+    "version": "1.0.0",
     "description": "Visual Aid for dyslexia, eye strain, convergence insufficiency and other stuff!",
-    "permissions": ["storage", "activeTab", "scripting"],
+    "permissions": ["storage", "activeTab", "scripting", "tabs"],
     "host_permissions": ["<all_urls>"],
     "background": {
         "service_worker": "background.js"
@@ -12,7 +12,8 @@
         {
             "matches": ["<all_urls>"],
             "js": ["content.js"],
-            "css": ["style.css"]
+            "css": ["style.css"],
+            "run_at": "document_idle"
         }
     ],
     "action": {

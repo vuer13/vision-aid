@@ -4,8 +4,8 @@ document.getElementById("mainTab").addEventListener("click", () => {
     document.getElementById("mainTab").classList.add("active");
     document.getElementById("settingsTab").classList.remove("active");
 });
-  
-  document.getElementById("settingsTab").addEventListener("click", () => {
+
+document.getElementById("settingsTab").addEventListener("click", () => {
     document.getElementById("mainPage").style.display = "none";
     document.getElementById("settingsPage").style.display = "block";
     document.getElementById("mainTab").classList.remove("active");
@@ -16,9 +16,10 @@ const features = ["guideBar", "timer", "bionic", "blink", "lazy", "focus", "iso"
 
 features.forEach((feature) => {
     const checkbox = document.getElementById(feature);
-    checkbox.addEventListener('change', async (e) =>{
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
+    checkbox.addEventListener('change', async (e) => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (feature === "blink") {
+            const interval = parseFloat(document.getElementById("blinkReminder")?.value) || 10;
             chrome.tabs.sendMessage(tab.id, {
                 action: `toggle_${feature}`,
                 value: e.target.checked,
@@ -34,8 +35,8 @@ features.forEach((feature) => {
 });
 
 document.getElementById('relaxButton').addEventListener('click', async () => {
-    const duration = parseInt(document.getElementById('relaxDuration'). value, 10) || 20;
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
+    const duration = parseInt(document.getElementById('relaxDuration').value, 10) || 20;
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     chrome.tabs.sendMessage(tab.id, {
         action: 'trigger_relax_mode',
         duration

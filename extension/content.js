@@ -6,6 +6,13 @@ let textIsolationEnabled = false;
 let textIsolationOverlay = null;
 let mouseMoveListener = null;
 
+let lemOverlay = null;
+let lemTimerId = null;
+let lemRunning = false;
+let lemSide = "left";
+let lemIntervalMs = 15000;
+let lemColor = "rgba(0, 0, 0, 0.35)";
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
         case "trigger_relax_mode":
@@ -44,17 +51,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             showBlinkOverlay();
             break;
 
-        case "toggle_magnification":
-            // TODO
-            break;
-
         case "toggle_lazy":
-            // TODO
+            if (message.value) {
+                startLazyEye();
+            } else {
+                stopLazyEye()
+            }
             break;
 
         case "toggle_focus":
             if (message.value) {
-                enableFocus(); 
+                enableFocus();
             } else {
                 disableFocus()
             }
@@ -286,3 +293,70 @@ function disableTextIsolation() {
         mouseMoveListener = null;
     }
 }
+
+function startLazyEye() {
+    if (lemRunning) {
+        return;
+    }
+
+    lemRunning = true;
+    ensureLazyOverlay();
+    if (lemTimerId) {
+        clearInterval(lemTimerId);
+    }
+    lemTimerId = setInterval(flipLazySide, lemIntervalMs);
+}
+
+function stopLazyEye() {
+    lemRunning = false;
+    if (lemTimerId) {
+        clearInterval(lemTimerId);
+        lemTimerId = null;
+    }
+
+    if (lemOverlay) {
+        lemOverlay.style.display = "none";
+    }
+}
+
+function ensureLazyOverlay() {
+    if (lemOverlay && document.body.contains(lemOverlay)) {
+        return;
+    }
+
+    lemOverlay = document.createElement("div");
+    lemOverlay.id = "lem-overlay";
+    lemOverlay.style.cssText = `
+      position: fixed;
+      top: 0; left: 0;
+      width: 50vw; 
+      height: 100vh;
+      pointer-events: none;
+      z-index: 2147483647;
+      background: ${lemColor};
+      mix-blend-mode: multiply;
+      transform: translateX(0);
+      transition: transform 200ms ease;
+    `;
+    document.documentElement.appendChild(lemOverlay);
+    setLazySide(lemSide);
+}
+
+function flipLazySide() {
+    setLazySide(lemSide === "left" ? "right" : "left");
+}
+
+function setLazySide(side) {
+    lemSide = side === "right" ? "right" : "left";
+    if (!lemOverlay) {
+        return;
+    }
+    lemOverlay.style.transform = lemSide === "right" ? "translateX(50vw)" : "translateX(0)";
+}
+
+const lemObserver = new MutationObserver(() => {
+    if (lemRunning && lemOverlay && !document.body.contains(lemOverlay)) {
+        document.documentElement.appendChild(lemOverlay);
+    }
+});
+lemObserver.observe(document.documentElement, { childList: true, subtree: true });

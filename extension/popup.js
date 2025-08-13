@@ -12,7 +12,7 @@ document.getElementById("mainTab").addEventListener("click", () => {
     document.getElementById("settingsTab").classList.add("active");
 });
 
-const features = ["guideBar", "timer", "bionic", "blink", "magnification", "lazy", "focus", "iso", "cursor"];
+const features = ["guideBar", "timer", "bionic", "blink", "lazy", "focus", "iso", "cursor"];
 
 features.forEach((feature) => {
     const checkbox = document.getElementById(feature);

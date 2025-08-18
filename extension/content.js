@@ -2,6 +2,9 @@ console.log("Vision Aid content.js loaded");
 
 let focusOverlay = null;
 let focusActive = false;
+let focusKeydownHandler = null;
+let focusPickHandler = null;
+
 let guideBar = null;
 let guideBarMouseMoveListener = null;
 let textIsolationEnabled = false;
@@ -54,7 +57,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (message.value) {
                 enableFocusMode();
             } else {
-                disableFocusMode()
+                disableFocusMode();
             }
             break;
 
@@ -246,41 +249,72 @@ function toggleBionicMode() {
 }
 
 function enableFocusMode() {
+    if (focusActive) {
+        return;
+    }
+
     focusActive = true;
-    document.addEventListener("click", selectFocusElement, { once: true });
-    alert("Click on what you want to focus on");
+
+    focusPickHandler = (e) => selectFocusElement(e);
+    document.addEventListener("click", focusPickHandler, { once: true, capture: true });
+
+    focusKeydownHandler = (e) => { if (e.key === "Escape") disableFocusMode(); };
+    document.addEventListener("keydown", focusKeydownHandler, true);
 }
 
 function selectFocusElement(e) {
     e.preventDefault();
     e.stopPropagation();
 
-    const target = e.target.getBoundingClientRect();
+    const el = document.elementFromPoint(e.clientX, e.clientY) || e.target;
+    let r = el.getBoundingClientRect();
 
-    if (focusOverlay) {
-        focusOverlay.remove();
+    if (r.width < 240 || r.height < 120) {
+        const W = Math.min(720, Math.max(360, window.innerWidth * 0.7));
+        const H = Math.min(480, Math.max(240, window.innerHeight * 0.5));
+        const left = Math.max(0, Math.min(window.innerWidth - W, e.clientX - W / 2));
+        const top = Math.max(0, Math.min(window.innerHeight - H, e.clientY - H / 2));
+        r = { left, top, right: left + W, bottom: top + H };
     }
+
+    if (focusOverlay) focusOverlay.remove();
+
+    const topInset = Math.max(0, r.top - 8);
+    const leftInset = Math.max(0, r.left - 8);
+    const bottomInset = Math.max(0, window.innerHeight - (r.bottom + 8));
+    const rightInset = Math.max(0, window.innerWidth - (r.right + 8));
 
     focusOverlay = document.createElement("div");
     focusOverlay.id = "focus-overlay";
     focusOverlay.style.cssText = `
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background-color: rgba(0, 0, 0, 0.7);
-        pointer-events: none;
-        z-index: 9999;
-        clip-path: inset(${target.top}px ${window.innerWidth - target.right}px ${window.innerHeight - target.bottom}px ${target.left}px);
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      pointer-events: none;
+      z-index: 2147483646;
+      clip-path: inset(${topInset}px ${rightInset}px ${bottomInset}px ${leftInset}px);
+      transition: clip-path 120ms ease;
     `;
-
-    document.body.appendChild(focusOverlay);
+    document.documentElement.appendChild(focusOverlay);
 }
 
 function disableFocusMode() {
+    if (!focusActive) {
+        return;
+    }
+
     focusActive = false;
+
     if (focusOverlay) {
-        focusOverlay.remove();
-        focusOverlay = null;
+        focusOverlay.remove(); focusOverlay = null;
+    }
+
+    if (focusPickHandler) {
+        document.removeEventListener("click", focusPickHandler, true);
+        focusPickHandler = null;
+    }
+    if (focusKeydownHandler) {
+        document.removeEventListener("keydown", focusKeydownHandler, true);
+        focusKeydownHandler = null;
     }
 }
 
@@ -372,3 +406,22 @@ function disableLargeCursor() {
         largeCursorEl = null;
     }
 }
+
+function hardResetVisionAid() {
+    document.querySelectorAll('#focus-overlay,#relax-overlay,#lem-overlay,#text-isolation-overlay,#guideBar,#va-large-cursor,#blink-box')
+        .forEach(el => el.remove());
+    focusActive = false;
+
+    if (guideBarMouseMoveListener) { document.removeEventListener('mousemove', guideBarMouseMoveListener); guideBarMouseMoveListener = null; }
+    if (mouseMoveListener) { document.removeEventListener('mousemove', mouseMoveListener); mouseMoveListener = null; }
+    if (largeCursorMoveListener) { document.removeEventListener('mousemove', largeCursorMoveListener); largeCursorMoveListener = null; }
+    if (focusKeydownHandler) { document.removeEventListener('keydown', focusKeydownHandler, true); focusKeydownHandler = null; }
+    if (focusDismissClickHandler) { document.removeEventListener('mousedown', focusDismissClickHandler, true); focusDismissClickHandler = null; }
+    if (focusToolbar) { focusToolbar.remove(); focusToolbar = null; }
+}
+
+document.addEventListener('keydown', e => {
+    if (e.altKey && e.shiftKey && (e.key === '0' || e.code === 'Digit0')) {
+        hardResetVisionAid();
+    }
+});

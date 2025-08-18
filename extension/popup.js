@@ -12,12 +12,15 @@ document.getElementById("settingsTab").addEventListener("click", () => {
     document.getElementById("settingsTab").classList.add("active");
 });
 
-const features = ["guideBar", "timer", "bionic", "blink", "lazy", "focus", "iso", "cursor"];
+const features = ["guideBar", "timer", "bionic", "blink", "focus", "iso", "cursor"];
 
 features.forEach((feature) => {
     const checkbox = document.getElementById(feature);
     checkbox.addEventListener('change', async (e) => {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.id) {
+            return;
+        }
         if (feature === "blink") {
             const interval = parseFloat(document.getElementById("blinkReminder")?.value) || 10;
             chrome.tabs.sendMessage(tab.id, {

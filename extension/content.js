@@ -7,13 +7,8 @@ let guideBarMouseMoveListener = null;
 let textIsolationEnabled = false;
 let textIsolationOverlay = null;
 let mouseMoveListener = null;
-
-let lemOverlay = null;
-let lemTimerId = null;
-let lemRunning = false;
-let lemSide = "left";
-let lemIntervalMs = 15000;
-let lemColor = "rgba(0, 0, 0, 0.35)";
+let largeCursorEl = null;
+let largeCursorMoveListener = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Vision Aid received:", message);
@@ -53,14 +48,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case "trigger_blink_overlay":
             showBlinkOverlay();
-            break;
-
-        case "toggle_lazy":
-            if (message.value) {
-                startLazyEye();
-            } else {
-                stopLazyEye()
-            }
             break;
 
         case "toggle_focus":
@@ -348,73 +335,40 @@ function disableTextIsolation() {
     }
 }
 
-function startLazyEye() {
-    if (lemRunning) {
+function enableLargeCursor() {
+    if (largeCursorEl) {
         return;
     }
 
-    lemRunning = true;
-    ensureLazyOverlay();
-
-    if (lemOverlay) {
-        lemOverlay.style.display = "block";
-    }
-    if (lemTimerId) {
-        clearInterval(lemTimerId);
-    }
-    lemTimerId = setInterval(flipLazySide, lemIntervalMs);
-}
-
-function stopLazyEye() {
-    lemRunning = false;
-    if (lemTimerId) {
-        clearInterval(lemTimerId);
-        lemTimerId = null;
-    }
-
-    if (lemOverlay) {
-        lemOverlay.style.display = "none";
-    }
-}
-
-function ensureLazyOverlay() {
-    if (lemOverlay && document.body.contains(lemOverlay)) {
-        return;
-    }
-
-    lemOverlay = document.createElement("div");
-    lemOverlay.id = "lem-overlay";
-    lemOverlay.style.cssText = `
+    largeCursorEl = document.createElement("div");
+    largeCursorEl.id = "va-large-cursor";
+    largeCursorEl.style.cssText = `
       position: fixed;
-      top: 0; left: 0;
-      width: 50vw; 
-      height: 100vh;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.85);
+      background: rgba(255,255,255,0.6);
       pointer-events: none;
       z-index: 2147483647;
-      background: ${lemColor};
-      mix-blend-mode: multiply;
-      transform: translateX(0);
-      transition: transform 200ms ease;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 6px rgba(0,0,0,0.25);
     `;
-    document.documentElement.appendChild(lemOverlay);
-    setLazySide(lemSide);
+    document.documentElement.appendChild(largeCursorEl);
+
+    largeCursorMoveListener = (e) => {
+        largeCursorEl.style.left = e.clientX + "px";
+        largeCursorEl.style.top = e.clientY + "px";
+    };
+    document.addEventListener("mousemove", largeCursorMoveListener, { passive: true });
 }
 
-function flipLazySide() {
-    setLazySide(lemSide === "left" ? "right" : "left");
-}
-
-function setLazySide(side) {
-    lemSide = side === "right" ? "right" : "left";
-    if (!lemOverlay) {
-        return;
+function disableLargeCursor() {
+    if (largeCursorMoveListener) {
+        document.removeEventListener("mousemove", largeCursorMoveListener);
+        largeCursorMoveListener = null;
     }
-    lemOverlay.style.transform = lemSide === "right" ? "translateX(50vw)" : "translateX(0)";
-}
-
-const lemObserver = new MutationObserver(() => {
-    if (lemRunning && lemOverlay && !document.body.contains(lemOverlay)) {
-        document.documentElement.appendChild(lemOverlay);
+    if (largeCursorEl) {
+        largeCursorEl.remove();
+        largeCursorEl = null;
     }
-});
-lemObserver.observe(document.documentElement, { childList: true, subtree: true });
+}

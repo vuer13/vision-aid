@@ -297,8 +297,8 @@ function enableTextIsolation() {
         position: fixed;
         left: 0;
         width: 100%;
-        height: 1.5em;
-        background-color: rgba(255, 255, 0, 0.3);
+        height: 5em;
+        background-color: rgba(250, 0, 0, 0.3);
         pointer-events: none;
         z-index: 9999;
         display: none;

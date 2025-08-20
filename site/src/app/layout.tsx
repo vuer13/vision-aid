@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -25,7 +26,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <body>
-                <ThemeProvider>{children}</ThemeProvider>
+                <Navbar />
+                <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </body>
         </html>
     );

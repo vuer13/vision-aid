@@ -12,7 +12,7 @@ const Navbar = () => {
                 <div>
                     <Link href='/home'>Home</Link>
                     <Link href='/tracker'>Tracker</Link>
-                    <Link href='/symptom'>Symptoms</Link>
+                    <Link href='/symptoms'>Symptoms</Link>
                     <Link href='/setting'>Settings</Link>
                 </div>
             </nav>

@@ -20,7 +20,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
                     });
                 }
             });
-        }, 20 * 60 * 1000); // Every 20 minutes
+        }, duration * 60 * 1000); // Every 20 minutes
     }
 
     if (message.action === "stop_timer") {

@@ -1,5 +1,17 @@
 console.log("Vision Aid content.js loaded");
 
+const DEFAULTS = {
+    guideBar: false,
+    timer: false,
+    bionic: false,
+    blink: false,
+    focus: false,
+    iso: false,
+    cursor: false,
+    relaxDuration: 20,
+    blinkReminder: 10
+};
+
 let focusOverlay = null;
 let focusActive = false;
 let focusKeydownHandler = null;
@@ -22,7 +34,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case "toggle_timer":
             chrome.runtime.sendMessage({
-                action: message.value ? "start_timer" : "stop_timer"
+                action: message.value ? "start_timer" : "stop_timer",
+                duration: message.duration
             });
             break;
 
@@ -45,7 +58,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case "toggle_blink":
             chrome.runtime.sendMessage({
                 action: message.value ? "start_blink_timer" : "stop_blink_timer",
-                periodMinutes: message.periodMinutes
+                interval: message.interval
             });
             break;
 
@@ -134,33 +147,40 @@ function showBlinkOverlay() {
 }
 
 function enableGuideBar() {
+    if (guideBar) return;
+
     guideBar = document.createElement("div");
-    guideBar.id = 'guideBar';
+    guideBar.id = "va-guideBar";
     guideBar.style.cssText = `
         position: fixed;
         left: 0;
+        top: 0;
         width: 100vw;
         height: 2px;
         background-color: red;
         pointer-events: none;
         z-index: 9999;
     `;
+
     document.body.appendChild(guideBar);
 
     guideBarMouseMoveListener = (e) => {
+        if (!guideBar) return;
         guideBar.style.top = `${e.clientY}px`;
     };
+
     document.addEventListener("mousemove", guideBarMouseMoveListener);
 }
 
 function disableGuideBar() {
-    if (guideBar) {
-        guideBar.remove();
-        guideBar = null;
-    }
     if (guideBarMouseMoveListener) {
         document.removeEventListener("mousemove", guideBarMouseMoveListener);
         guideBarMouseMoveListener = null;
+    }
+
+    if (guideBar) {
+        guideBar.remove();
+        guideBar = null;
     }
 }
 
@@ -408,7 +428,7 @@ function disableLargeCursor() {
 }
 
 function hardResetVisionAid() {
-    document.querySelectorAll('#focus-overlay,#relax-overlay,#lem-overlay,#text-isolation-overlay,#guideBar,#va-large-cursor,#blink-box')
+    document.querySelectorAll('#focus-overlay,#relax-overlay,#lem-overlay,#text-isolation-overlay,#va-guideBar,#va-large-cursor,#blink-box')
         .forEach(el => el.remove());
     focusActive = false;
 
@@ -425,3 +445,43 @@ document.addEventListener('keydown', e => {
         hardResetVisionAid();
     }
 });
+
+async function restoreVisionAidState() {
+    const saved = await chrome.storage.local.get(DEFAULTS);
+
+    if (saved.guideBar) {
+        enableGuideBar();
+    }
+
+    if (saved.bionic) {
+        toggleBionicMode();
+    }
+
+    if (saved.focus) {
+        enableFocusMode();
+    }
+
+    if (saved.iso) {
+        enableTextIsolation();
+    }
+
+    if (saved.cursor) {
+        enableLargeCursor();
+    }
+
+    if (saved.timer) {
+        chrome.runtime.sendMessage({
+            action: "start_timer",
+            duration: saved.relaxDuration
+        });
+    }
+
+    if (saved.blink) {
+        chrome.runtime.sendMessage({
+            action: "start_blink_timer",
+            interval: saved.blinkReminder
+        });
+    }
+}
+
+restoreVisionAidState();

@@ -6,6 +6,9 @@ Vision Aid is a Chrome extension designed to support users who experience visual
 
 Rather than acting as a medical tool, Vision Aid serves as a practical on-screen support system that gives users simple visual assistance features directly inside their browser. 
 
+## Demo
+- COMING SOON!!!
+
 ## Disclaimer
 
 Vision Aid is intended as an accessibility and comfort tool. It is not a medical device and is not meant to diagnose, treat, or replace professional care.
